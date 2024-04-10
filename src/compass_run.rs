@@ -12,7 +12,6 @@ use super::channel_map::{Board, ChannelMap};
 use super::compass_file::CompassFile;
 use super::error::EVBError;
 use super::event_builder::EventBuilder;
-use super::nuclear_data::MassMap;
 use super::scaler_list::{ScalerEntryUI, ScalerList};
 use super::shift_map::{ShiftMap, ShiftMapEntry};
 use super::used_size::UsedSize;
@@ -27,7 +26,6 @@ struct RunParams<'a> {
     pub output_file_path: PathBuf,
     pub scalerlist: Vec<ScalerEntryUI>,
     pub scalerout_file_path: PathBuf,
-    pub nuc_map: &'a MassMap,
     pub channel_map: &'a ChannelMap,
     pub shift_map: &'a Option<ShiftMap>,
     pub coincidence_window: f64,
@@ -206,7 +204,6 @@ pub struct ProcessParams {
 //Function which handles processing multiple runs, this is what the UI actually calls
 pub fn process_runs(params: ProcessParams, progress: Arc<Mutex<f32>>) -> Result<(), EVBError> {
     let channel_map = ChannelMap::new(&params.channel_map);
-    let mass_map = MassMap::new()?;
     let shift_map = ShiftMap::new(params.shift_map);
 
     for run in params.run_min..params.run_max {
@@ -216,7 +213,6 @@ pub fn process_runs(params: ProcessParams, progress: Arc<Mutex<f32>>) -> Result<
             output_file_path: params.output_dir.join(format!("run_{}.parquet", run)),
             scalerlist: params.scaler_list.clone(),
             scalerout_file_path: params.output_dir.join(format!("run_{}_scalers.txt", run)),
-            nuc_map: &mass_map,
             channel_map: &channel_map,
             shift_map: &Some(shift_map.clone()),
             coincidence_window: params.coincidence_window,

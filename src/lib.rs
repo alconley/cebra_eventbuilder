@@ -18,8 +18,6 @@ mod error;
 #[cfg(not(target_arch = "wasm32"))]
 mod event_builder;
 #[cfg(not(target_arch = "wasm32"))]
-mod nuclear_data;
-#[cfg(not(target_arch = "wasm32"))]
 mod scaler_list;
 #[cfg(not(target_arch = "wasm32"))]
 mod shift_map;

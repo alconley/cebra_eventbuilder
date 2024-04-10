@@ -1,5 +1,4 @@
 use super::channel_map::ChannelMapError;
-use super::nuclear_data::MassError;
 use super::shift_map::ShiftError;
 use flate2::DecompressError;
 use polars::error::PolarsError;
@@ -14,7 +13,6 @@ pub enum EVBError {
     Parser,
     Channel(ChannelMapError),
     DataFrame(PolarsError),
-    MassMap(MassError),
     ShiftMap(ShiftError),
     Sync,
 }
@@ -43,12 +41,6 @@ impl From<PolarsError> for EVBError {
     }
 }
 
-impl From<MassError> for EVBError {
-    fn from(value: MassError) -> Self {
-        EVBError::MassMap(value)
-    }
-}
-
 impl From<ShiftError> for EVBError {
     fn from(value: ShiftError) -> Self {
         EVBError::ShiftMap(value)
@@ -69,7 +61,6 @@ impl Display for EVBError {
                 write!(f, "Run had an error occur with the channel map: {}", x)
             }
             EVBError::DataFrame(x) => write!(f, "Run had an error using polars: {}", x),
-            EVBError::MassMap(x) => write!(f, "Run had an error with the mass data: {}", x),
             EVBError::ShiftMap(x) => write!(f, "Run had an error with the shift map: {}", x),
             EVBError::Sync => write!(f, "Run was unable to access shared progress resource"),
         }

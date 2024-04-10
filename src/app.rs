@@ -14,7 +14,6 @@ use eframe::App;
 use super::channel_map::{Board, ChannelType};
 use super::compass_run::{process_runs, ProcessParams};
 use super::error::EVBError;
-use super::nuclear_data::MassMap;
 use super::scaler_list::ScalerEntryUI;
 use super::shift_map::ShiftMapEntry;
 use super::ws::{Workspace, WorkspaceError};
@@ -67,8 +66,6 @@ pub struct EVBApp {
     rxn_eqn: String,
     active_tab: ActiveTab,
 
-    mass_map: MassMap,
-
     #[serde(skip)]
     thread_handle: Option<JoinHandle<Result<(), EVBError>>>,
 
@@ -83,7 +80,6 @@ impl EVBApp {
             parameters: EvbAppParams::default(),
             active_tab: ActiveTab::MainTab,
             rxn_eqn: String::from("None"),
-            mass_map: MassMap::new().expect("Could not open amdc data, shutting down!"),
             thread_handle: None,
             window,
         }
