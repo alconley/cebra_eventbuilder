@@ -9,15 +9,6 @@ use super::compass_data::generate_board_channel_uuid;
 #[derive(Debug, Clone, Copy, PartialEq, AsRefStr, EnumIter, Serialize, Deserialize)]
 pub enum ChannelType {
     //Detector fields -> can be channel mapped
-    AnodeFront,
-    AnodeBack,
-    ScintLeft,
-    ScintRight,
-    Cathode,
-    DelayFrontLeft,
-    DelayFrontRight,
-    DelayBackLeft,
-    DelayBackRight,
     Cebra0,
     Cebra1,
     Cebra2,

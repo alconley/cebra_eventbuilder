@@ -14,7 +14,6 @@ use eframe::App;
 use super::channel_map::{Board, ChannelType};
 use super::compass_run::{process_runs, ProcessParams};
 use super::error::EVBError;
-use super::kinematics::KineParameters;
 use super::nuclear_data::MassMap;
 use super::scaler_list::ScalerEntryUI;
 use super::shift_map::ShiftMapEntry;
@@ -23,7 +22,6 @@ use super::ws::{Workspace, WorkspaceError};
 #[derive(Debug, Serialize, Deserialize)]
 struct EvbAppParams {
     pub workspace: Option<Workspace>,
-    pub kinematics: KineParameters,
     pub coincidence_window: f64,
     pub run_min: i32,
     pub run_max: i32,
@@ -36,7 +34,6 @@ impl Default for EvbAppParams {
     fn default() -> Self {
         EvbAppParams {
             workspace: None,
-            kinematics: KineParameters::default(),
             coincidence_window: 3.0e3,
             run_min: 0,
             run_max: 0,
@@ -50,7 +47,6 @@ impl Default for EvbAppParams {
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 enum ActiveTab {
     MainTab,
-    Kinematics,
     ChannelMap,
     ShiftMap,
     ScalerList,
@@ -130,10 +126,7 @@ impl EVBApp {
                 Ok(mut x) => *x = 0.0,
                 Err(_) => error!("Could not aquire lock at starting processor..."),
             };
-            let k_params = self.parameters.kinematics.clone();
-            self.thread_handle = Some(std::thread::spawn(|| {
-                process_runs(r_params, k_params, prog)
-            }));
+            self.thread_handle = Some(std::thread::spawn(|| process_runs(r_params, prog)));
         } else {
             error!("Cannot run event builder without all filepaths specified");
         }
@@ -249,51 +242,6 @@ impl EVBApp {
                                             |ui| {
                                                 // Populate ComboBox with channel types
 
-                                                ui.selectable_value(
-                                                    channel_type,
-                                                    ChannelType::AnodeFront,
-                                                    "AnodeFront",
-                                                );
-                                                ui.selectable_value(
-                                                    channel_type,
-                                                    ChannelType::AnodeBack,
-                                                    "AnodeBack",
-                                                );
-                                                ui.selectable_value(
-                                                    channel_type,
-                                                    ChannelType::ScintLeft,
-                                                    "ScintLeft",
-                                                );
-                                                ui.selectable_value(
-                                                    channel_type,
-                                                    ChannelType::ScintRight,
-                                                    "ScintRight",
-                                                );
-                                                ui.selectable_value(
-                                                    channel_type,
-                                                    ChannelType::Cathode,
-                                                    "Cathode",
-                                                );
-                                                ui.selectable_value(
-                                                    channel_type,
-                                                    ChannelType::DelayFrontLeft,
-                                                    "DelayFrontLeft",
-                                                );
-                                                ui.selectable_value(
-                                                    channel_type,
-                                                    ChannelType::DelayFrontRight,
-                                                    "DelayFrontRight",
-                                                );
-                                                ui.selectable_value(
-                                                    channel_type,
-                                                    ChannelType::DelayBackLeft,
-                                                    "DelayBackLeft",
-                                                );
-                                                ui.selectable_value(
-                                                    channel_type,
-                                                    ChannelType::DelayBackRight,
-                                                    "DelayBackRight",
-                                                );
                                                 ui.selectable_value(
                                                     channel_type,
                                                     ChannelType::Cebra0,
@@ -430,69 +378,6 @@ impl EVBApp {
         // });
     }
 
-    fn kinematics_ui(&mut self, ui: &mut egui::Ui) {
-        ui.label(
-            RichText::new("Kinematics")
-                .color(Color32::LIGHT_BLUE)
-                .size(18.0),
-        );
-
-        egui::Grid::new("KineGrid").show(ui, |ui| {
-            ui.label("Target Z     ");
-            ui.add(
-                egui::widgets::DragValue::new(&mut self.parameters.kinematics.target_z).speed(1),
-            );
-            ui.label("Target A     ");
-            ui.add(
-                egui::widgets::DragValue::new(&mut self.parameters.kinematics.target_a).speed(1),
-            );
-            ui.end_row();
-
-            ui.label("Projectile Z");
-            ui.add(
-                egui::widgets::DragValue::new(&mut self.parameters.kinematics.projectile_z)
-                    .speed(1),
-            );
-            ui.label("Projectile A");
-            ui.add(
-                egui::widgets::DragValue::new(&mut self.parameters.kinematics.projectile_a)
-                    .speed(1),
-            );
-            ui.end_row();
-
-            ui.label("Ejectile Z   ");
-            ui.add(
-                egui::widgets::DragValue::new(&mut self.parameters.kinematics.ejectile_z).speed(1),
-            );
-            ui.label("Ejectile A   ");
-            ui.add(
-                egui::widgets::DragValue::new(&mut self.parameters.kinematics.ejectile_a).speed(1),
-            );
-            ui.end_row();
-
-            ui.label("Magnetic Field(kG)");
-            ui.add(
-                egui::widgets::DragValue::new(&mut self.parameters.kinematics.b_field).speed(10.0),
-            );
-            ui.label("SPS Angle(deg)");
-            ui.add(
-                egui::widgets::DragValue::new(&mut self.parameters.kinematics.sps_angle).speed(1.0),
-            );
-            ui.label("Projectile KE(MeV)");
-            ui.add(
-                egui::widgets::DragValue::new(&mut self.parameters.kinematics.projectile_ke)
-                    .speed(0.01),
-            );
-            ui.end_row();
-
-            ui.label("Reaction Equation");
-            ui.label(&self.rxn_eqn);
-            if ui.button("Set Kinematics").clicked() {
-                self.rxn_eqn = self.parameters.kinematics.generate_rxn_eqn(&self.mass_map);
-            }
-        });
-    }
-
     fn main_tab_ui(&mut self, ui: &mut egui::Ui) {
         //Files/Workspace
         ui.separator();
@@ -544,7 +429,7 @@ impl EVBApp {
     }
 
     fn ui_tabs(&mut self, ui: &mut egui::Ui) {
-        egui::TopBottomPanel::top("cebra_sps_top_panel").show_inside(ui, |ui| {
+        egui::TopBottomPanel::top("cebra_top_panel").show_inside(ui, |ui| {
             ui.horizontal(|ui| {
                 if ui
                     .selectable_label(
@@ -554,15 +439,6 @@ impl EVBApp {
                     .clicked()
                 {
                     self.active_tab = ActiveTab::MainTab;
-                }
-                if ui
-                    .selectable_label(
-                        matches!(self.active_tab, ActiveTab::Kinematics),
-                        "Kinematics",
-                    )
-                    .clicked()
-                {
-                    self.active_tab = ActiveTab::Kinematics;
                 }
                 if ui
                     .selectable_label(
@@ -593,7 +469,6 @@ impl EVBApp {
 
         match self.active_tab {
             ActiveTab::MainTab => self.main_tab_ui(ui),
-            ActiveTab::Kinematics => self.kinematics_ui(ui),
             ActiveTab::ChannelMap => self.channel_map_ui(ui),
             ActiveTab::ShiftMap => self.shift_map_ui(ui),
             ActiveTab::ScalerList => self.scaler_list_ui(ui),
@@ -669,7 +544,7 @@ impl App for EVBApp {
     #[cfg(not(target_arch = "wasm32"))]
     fn update(&mut self, ctx: &eframe::egui::Context, _frame: &mut eframe::Frame) {
         if self.window {
-            egui::Window::new("CeBrA - SE-SPS Event Builder")
+            egui::Window::new("CeBrA Event Builder")
                 .min_width(200.0)
                 .max_width(600.0)
                 .show(ctx, |ui| {
@@ -685,7 +560,7 @@ impl App for EVBApp {
     #[cfg(target_arch = "wasm32")]
     fn update(&mut self, ctx: &eframe::egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.label("CeBrA - SPS Eventbuilder is not supported in the browser.");
+            ui.label("CeBrA Eventbuilder is not supported in the browser.");
         });
     }
 }

@@ -14,18 +14,18 @@ impl EVBApp {
 impl App for EVBApp {
     fn update(&mut self, ctx: &eframe::egui::Context, _frame: &mut eframe::Frame) {
         if self.window {
-            egui::Window::new("CeBrA - SE-SPS Event Builder")
+            egui::Window::new("CeBrA Event Builder")
                 .min_width(200.0)
                 .max_width(600.0)
                 .show(ctx, |ui| {
                     ui.label(
-                        "CeBrA - SPS Eventbuilder is not supported in the browser. Please run it natively.",
+                        "CeBrA Eventbuilder is not supported in the browser. Please run it natively.",
                     );
                 });
         } else {
             egui::CentralPanel::default().show(ctx, |ui| {
                 ui.label(
-                    "CeBrA - SPS Eventbuilder is not supported in the browser. Please run it natively.",
+                    "CeBrA Eventbuilder is not supported in the browser. Please run it natively.",
                 );
             });
         }

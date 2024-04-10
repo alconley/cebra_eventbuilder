@@ -17,7 +17,7 @@ On Fedora Rawhide you need to run:
 
 ## EventBuilders
 
-This eventbuilder was modified from [sps_eventbuilder](https://github.com/alconley/sps_eventbuilder) which was modified from [spsevb](https://github.com/gwm17/spsevb). This eventbuilder is designed to be used with the SE-SPS and CeBrA (https://fsunuc.physics.fsu.edu/wiki/index.php/Split-Pole_Spectrograph).
+This eventbuilder was modified from [cebra_sps_eventbuilder](https://github.com/alconley/cebra_sps_eventbuilder) which was modified from [sps_eventbuilder](https://github.com/alconley/sps_eventbuilder) which was modified from [spsevb](https://github.com/gwm17/spsevb). This eventbuilder is designed to be used with just CeBrA (https://fsunuc.physics.fsu.edu/wiki/index.php/Split-Pole_Spectrograph).
 
 ### Use
 

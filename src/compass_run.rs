@@ -12,7 +12,6 @@ use super::channel_map::{Board, ChannelMap};
 use super::compass_file::CompassFile;
 use super::error::EVBError;
 use super::event_builder::EventBuilder;
-use super::kinematics::{calculate_weights, KineParameters};
 use super::nuclear_data::MassMap;
 use super::scaler_list::{ScalerEntryUI, ScalerList};
 use super::shift_map::{ShiftMap, ShiftMapEntry};
@@ -66,11 +65,7 @@ fn write_dataframe_fragment(
 }
 
 //Main function which processes a single run archive and writes the resulting event built data to parquet file
-fn process_run(
-    params: RunParams<'_>,
-    k_params: &KineParameters,
-    progress: Arc<Mutex<f32>>,
-) -> Result<(), EVBError> {
+fn process_run(params: RunParams<'_>, progress: Arc<Mutex<f32>>) -> Result<(), EVBError> {
     //Protective, ensure no loose files
     clean_up_unpack_dir(&params.unpack_dir_path)?;
 
@@ -102,7 +97,6 @@ fn process_run(
 
     let mut evb = EventBuilder::new(&params.coincidence_window);
     let mut analyzed_data = ChannelData::default();
-    let x_weights = calculate_weights(k_params, params.nuc_map);
 
     let mut earliest_file_index: Option<usize>;
 
@@ -147,7 +141,7 @@ fn process_run(
         }
 
         if evb.is_event_ready() {
-            analyzed_data.append_event(evb.get_ready_event(), params.channel_map, x_weights);
+            analyzed_data.append_event(evb.get_ready_event(), params.channel_map);
             //Check to see if we need to fragment
             if analyzed_data.get_used_size() > MAX_USED_SIZE {
                 write_dataframe_fragment(
@@ -210,11 +204,7 @@ pub struct ProcessParams {
 }
 
 //Function which handles processing multiple runs, this is what the UI actually calls
-pub fn process_runs(
-    params: ProcessParams,
-    k_params: KineParameters,
-    progress: Arc<Mutex<f32>>,
-) -> Result<(), EVBError> {
+pub fn process_runs(params: ProcessParams, progress: Arc<Mutex<f32>>) -> Result<(), EVBError> {
     let channel_map = ChannelMap::new(&params.channel_map);
     let mass_map = MassMap::new()?;
     let shift_map = ShiftMap::new(params.shift_map);
@@ -240,7 +230,7 @@ pub fn process_runs(
 
         //Skip over run if it doesnt exist
         if local_params.run_archive_path.exists() {
-            process_run(local_params, &k_params, progress.clone())?;
+            process_run(local_params, progress.clone())?;
         }
     }
 
